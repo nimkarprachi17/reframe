@@ -246,7 +246,11 @@ export default function VideoEditor() {
 
   const handleCopyLink = () => {
     if (typeof window === "undefined") return;
-    navigator.clipboard.writeText(window.location.href).then(() => {
+    const encoded = btoa(JSON.stringify(recipe));
+    const url = new URL(window.location.href);
+    url.searchParams.set("settings", encoded);
+    history.replaceState(null, "", url.toString());
+    navigator.clipboard.writeText(url.toString()).then(() => {
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     });

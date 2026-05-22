@@ -118,6 +118,19 @@ function validateRecipe(recipe: EditRecipe, duration: number ): string | null {
   );
 }
 
+function encodeRecipe(recipe: EditRecipe): string {
+  return btoa(JSON.stringify(recipe));
+}
+
+function decodeRecipe(encoded: string): Partial<EditRecipe> | null {
+  try {
+    const decoded = JSON.parse(atob(encoded));
+    return decoded as Partial<EditRecipe>;
+  } catch {
+    return null;
+  }
+}
+
 export function useVideoEditor() {
   const [file, setFile] = useState<File | null>(null);
   const [duration, setDuration] = useState<number>(0);
@@ -126,11 +139,20 @@ export function useVideoEditor() {
     height: number;
     duration: number;
   } | null>(null);
-  const [recipe, setRecipe] = useState({
-    ...DEFAULT_RECIPE,
-    soundOnCompletion:
-      typeof window !== "undefined" &&
-      localStorage.getItem("soundOnCompletion") === "true",
+  const [recipe, setRecipe] = useState<EditRecipe>(() => {
+    if (typeof window === "undefined") return { ...DEFAULT_RECIPE };
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get("settings");
+    if (encoded) {
+      const decoded = decodeRecipe(encoded);
+      if (decoded) return { ...DEFAULT_RECIPE, ...decoded };
+    }
+    return {
+      ...DEFAULT_RECIPE,
+      soundOnCompletion:
+        typeof window !== "undefined" &&
+        localStorage.getItem("soundOnCompletion") === "true",
+    };
   });
   const [status, setStatus] = useState<ExportStatus>("idle");
   const [progress, setProgress] = useState(0);
